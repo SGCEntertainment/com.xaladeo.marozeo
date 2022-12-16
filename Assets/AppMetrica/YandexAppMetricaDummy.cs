@@ -25,10 +25,6 @@ public class YandexAppMetricaDummy : BaseYandexAppMetrica
     {
     }
 
-    public override void ReportAdRevenue(YandexAppMetricaAdRevenue adRevenue)
-    {
-    }
-
     public override void ReportEvent(string message)
     {
     }

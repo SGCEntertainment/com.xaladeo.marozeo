@@ -24,8 +24,6 @@ public abstract class BaseYandexAppMetrica : IYandexAppMetrica
 
     public abstract void PauseSession();
 
-    public abstract void ReportAdRevenue(YandexAppMetricaAdRevenue adRevenue);
-
     public abstract void ReportEvent(string message);
 
     public abstract void ReportEvent(string message, IDictionary<string, object> parameters);

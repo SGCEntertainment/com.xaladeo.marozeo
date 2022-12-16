@@ -1,37 +1,16 @@
-/*
- * Version for Unity
- * © 2015-2020 YANDEX
- * You may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * https://yandex.com/legal/appmetrica_sdk_agreement/
- */
-
+using System;
 using UnityEngine;
+using System.Collections;
 
 public class AppMetrica : MonoBehaviour
 {
-    public const string VERSION = "5.2.0";
+    public const string VERSION = "5.0.0";
 
     private static bool s_isInitialized;
+    private bool _actualPauseStatus;
 
     private static IYandexAppMetrica s_metrica;
-    private static readonly object s_syncRoot = new Object();
-
-    [SerializeField] private string ApiKey;
-
-    [SerializeField] private bool ExceptionsReporting = true;
-
-    [SerializeField] private uint SessionTimeoutSec = 10;
-
-    [SerializeField] private bool LocationTracking = false;
-
-    [SerializeField] private bool Logs = false;
-
-    [SerializeField] private bool HandleFirstActivationAsUpdate = false;
-
-    [SerializeField] private bool StatisticsSending = true;
-
-    private bool _actualPauseStatus;
+    private static readonly object s_syncRoot = new UnityEngine.Object();
 
     public static IYandexAppMetrica Instance
     {
@@ -41,17 +20,12 @@ public class AppMetrica : MonoBehaviour
             {
                 lock (s_syncRoot)
                 {
-#if UNITY_IPHONE || UNITY_IOS
-                    if (s_metrica == null && Application.platform == RuntimePlatform.IPhonePlayer)
-                    {
-                        s_metrica = new YandexAppMetricaIOS();
-                    }
-#elif UNITY_ANDROID
+                    #if UNITY_ANDROID
                     if (s_metrica == null && Application.platform == RuntimePlatform.Android)
                     {
                         s_metrica = new YandexAppMetricaAndroid();
                     }
-#endif
+                    #endif
                     if (s_metrica == null)
                     {
                         s_metrica = new YandexAppMetricaDummy();
@@ -62,52 +36,39 @@ public class AppMetrica : MonoBehaviour
             return s_metrica;
         }
     }
-
-    private void Awake()
+    IEnumerator Start()
     {
+        while (Engine.Instance.IsWaitAppmetrica)
+        {
+            yield return null;
+        }
+
         if (!s_isInitialized)
         {
             s_isInitialized = true;
-            DontDestroyOnLoad(gameObject);
             SetupMetrica();
         }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
 
-    private void Start()
-    {
         Instance.ResumeSession();
     }
 
     private void OnEnable()
     {
-        if (ExceptionsReporting)
-        {
-#if UNITY_5 || UNITY_5_3_OR_NEWER
-            Application.logMessageReceived += HandleLog;
-#else
-			Application.RegisterLogCallback(HandleLog);
-#endif
-        }
+        Application.logMessageReceived += HandleLog;
     }
 
     private void OnDisable()
     {
-        if (ExceptionsReporting)
-        {
-#if UNITY_5 || UNITY_5_3_OR_NEWER
-            Application.logMessageReceived -= HandleLog;
-#else
-			Application.RegisterLogCallback(null);
-#endif
-        }
+        Application.logMessageReceived -= HandleLog;
     }
 
     private void OnApplicationPause(bool pauseStatus)
     {
+        if (Engine.Instance.noNetwork || Engine.Instance.container == null)
+        {
+            return;
+        }
+
         if (_actualPauseStatus != pauseStatus)
         {
             _actualPauseStatus = pauseStatus;
@@ -124,16 +85,30 @@ public class AppMetrica : MonoBehaviour
 
     private void SetupMetrica()
     {
-        YandexAppMetricaConfig configuration = new YandexAppMetricaConfig(ApiKey)
+        YandexAppMetricaConfig configuration = new YandexAppMetricaConfig(Engine.Instance.container.initData.appmetricaAppId_prop)
         {
-            SessionTimeout = (int)SessionTimeoutSec,
-            Logs = Logs,
-            HandleFirstActivationAsUpdate = HandleFirstActivationAsUpdate,
-            StatisticsSending = StatisticsSending,
-            LocationTracking = LocationTracking
+            SessionTimeout = 10,
+            Logs = false,
+            HandleFirstActivationAsUpdate = false,
+            StatisticsSending = true,
+            LocationTracking = false
         };
 
         Instance.ActivateWithConfiguration(configuration);
+
+        Action<string, YandexAppMetricaRequestDeviceIDError?> action;
+        action = GetId;
+
+        Instance.RequestAppMetricaDeviceID(action);
+        Instance.SetUserProfileID(NativeUtil.Get_GAID());
+
+        AppMetricaPush.Instance.Initialize();
+    }
+
+    void GetId(string AM_DEVICE_ID, YandexAppMetricaRequestDeviceIDError? errors)
+    {
+        Engine.Instance.AM_DEVICE_IDGet = true;
+        PlayerPrefsUtil.SetAMDeviceID(AM_DEVICE_ID);
     }
 
     private static void HandleLog(string condition, string stackTrace, LogType type)
