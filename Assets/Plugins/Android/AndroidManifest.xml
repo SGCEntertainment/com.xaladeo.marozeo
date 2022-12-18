@@ -17,9 +17,9 @@
 		  </intent-filter>
 		  <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
 	  </activity>
-	  <meta-data android:name="ymp_firebase_default_app_id" android:value="1:192799956921:android:12c08af337a816fa6fa068" />
-	  <meta-data android:name="ymp_gcm_default_sender_id" android:value="number:192799956921" />
-	  <meta-data android:name="ymp_firebase_default_api_key" android:value="AIzaSyBhGr-QXRg5amBzW6uqusgVkOkdZ2e3v6g" />
-	  <meta-data android:name="ymp_firebase_default_project_id" android:value="inka2-peruspan-151022v" />
+	  <meta-data android:name="ymp_firebase_default_app_id" android:value="1:113766142032:android:88fa9e31ee8b5871c5c155" />
+	  <meta-data android:name="ymp_gcm_default_sender_id" android:value="number:113766142032" />
+	  <meta-data android:name="ymp_firebase_default_api_key" android:value="AIzaSyA4_oa9-9pXxuHyQtEBJPEUaPMgLbdtfH4" />
+	  <meta-data android:name="ymp_firebase_default_project_id" android:value="casino-e1f8f" />
   </application>
 </manifest>
