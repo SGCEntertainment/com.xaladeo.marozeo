@@ -44,7 +44,10 @@ public class Engine : MonoBehaviour
 	public bool AM_DEVICE_IDGet;
 
 	string target;
-	string config = null;
+	private string Config
+	{
+		get => Resources.Load<TextAsset>("config").text;
+    }
 
 	string GAID = "[NONE]";
 	string AM_DEVICE_ID = "[NONE]";
@@ -99,8 +102,12 @@ public class Engine : MonoBehaviour
 
 		RemoteConfigService.Instance.FetchCompleted += (responce) =>
 		{
-			config = RemoteConfigService.Instance.appConfig.GetJson("data");
-			PlayerPrefsUtil.SetConfig(config);
+			bool enable = RemoteConfigService.Instance.appConfig.GetBool("enable");
+			servicesInitialized = true;
+			if(!enable)
+			{
+				OnFinalActionEvent?.Invoke(string.Empty);
+			}
 		};
 
 		await RemoteConfigService.Instance.FetchConfigsAsync(new UserAttributes(), new AppAttributes());
@@ -158,8 +165,7 @@ public class Engine : MonoBehaviour
 			yield return null;
 		}
 
-		config = PlayerPrefsUtil.GetConfig();
-		container = Decriptor.GetData(config, out encryptData);
+		container = Decriptor.GetData(Config, out encryptData);
 
 		AppsFlyer.setIsDebug(true);
 		AppsFlyer.initSDK(container.initData.appsFlyerAppId_prop, "");
